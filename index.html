@@ -265,6 +265,17 @@ function initThree() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+  
+  buildMap();
+  dot.style.display = 'block';
+  window.addEventListener('resize', onResize);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════════════════════════════════════
+function buildMap() {
+
   scene.add(new THREE.AmbientLight(0x1a2a44, 1.4));
   const sun = new THREE.DirectionalLight(0xfff4e0, 2.4);
   sun.position.set(12, 32, 12); sun.castShadow = true;
@@ -276,15 +287,6 @@ function initThree() {
   const l1 = new THREE.PointLight(0x4fc3f7, 1.2, 80); l1.position.set(-14, 12, -14); scene.add(l1);
   const l2 = new THREE.PointLight(0xff8a65, 0.9, 80); l2.position.set( 14, 12,  14); scene.add(l2);
 
-  buildMap();
-  dot.style.display = 'block';
-  window.addEventListener('resize', onResize);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  MAP
-// ═══════════════════════════════════════════════════════════════════════════
-function buildMap() {
   // ground
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(MAP * 2, MAP * 2, 40, 40),
@@ -698,9 +700,7 @@ function gameLoop() {
   renderer.render(scene, camera);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  START / RESTART
-// ═══════════════════════════════════════════════════════════════════════════
+ 
 function startGame() {
   document.getElementById('splash').style.display = 'none';
   document.getElementById('winner-banner').classList.remove('show');
