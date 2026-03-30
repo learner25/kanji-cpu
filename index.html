@@ -54,8 +54,8 @@ body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;color:#fff;user-select
 
 /* ═══ TIMER ═══ */
 #timer-display{
-  position:absolute;top:clamp(75px,18vw,108px);left:50%;transform:translateX(-50%);
-  font-size:clamp(16px,5vw,22px);color:rgba(255,255,255,.65);letter-spacing:2px;
+  position:absolute;top:clamp(62px,14vmin,108px);left:50%;transform:translateX(-50%);
+  font-size:clamp(14px,4vmin,22px);color:rgba(255,255,255,.65);letter-spacing:2px;
   background:rgba(0,0,0,.55);border-radius:8px;padding:3px 12px;
   backdrop-filter:blur(6px);pointer-events:none;
 }
@@ -63,9 +63,9 @@ body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;color:#fff;user-select
 @keyframes urgentPulse{from{opacity:1}to{opacity:.3}}
 
 /* ═══ MINIMAP ═══ */
-#minimap-wrap{position:absolute;bottom:clamp(110px,28vw,160px);right:10px}
+#minimap-wrap{position:absolute;bottom:clamp(6px,14vmin,120px);right:10px}
 #minimap{
-  width:clamp(70px,18vw,100px);height:clamp(70px,18vw,100px);
+  width:clamp(70px,14vmin,100px);height:clamp(70px,14vmin,100px);
   background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.18);
   border-radius:8px;overflow:hidden;
 }
@@ -96,8 +96,8 @@ body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;color:#fff;user-select
 
 /* ═══ JOYSTICK ═══ */
 #joystick-zone{
-  position:fixed;bottom:14px;left:14px;
-  width:clamp(100px,28vw,140px);height:clamp(100px,28vw,140px);
+  position:fixed;bottom:10px;left:10px;
+  width:clamp(86px,20vmin,140px);height:clamp(86px,20vmin,140px);
   z-index:30;pointer-events:all;display:none;
 }
 #joystick-base{
@@ -174,6 +174,61 @@ body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;color:#fff;user-select
   pointer-events:none;z-index:50;animation:floatUp 1.2s ease-out forwards;
 }
 @keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.3)}100%{opacity:0;transform:translateY(-80px) scale(.6)}}
+/* ═══════════════════════════════════════════════════════
+   LANDSCAPE MOBILE — short screens (phones sideways)
+   ═══════════════════════════════════════════════════════ */
+@media (orientation:landscape) and (max-height:500px) {
+
+  /* ── HUDs: compact at top corners ── */
+  .player-hud{ top:6px; padding:5px 9px; max-width:34vw; border-radius:8px; }
+  #hud-p1{ left:6px }
+  #hud-p2{ right:6px }
+  .hud-name{ font-size:9px; letter-spacing:1px; margin-bottom:1px }
+  .hud-score{ font-size:18px }
+  .hud-kanji-row{ gap:2px; margin-top:3px }
+  .kanji-chip{ font-size:10px; width:18px; height:18px; border-radius:3px }
+
+  /* ── Center info: shrink, stay centred ── */
+  #center-info{ top:6px; padding:4px 10px; border-radius:8px; max-width:28vw }
+  #word-display{ font-size:13px; letter-spacing:2px }
+  #word-label{ font-size:7px; margin-top:0 }
+
+  /* ── Timer: just below center-info ── */
+  #timer-display{ top:50px; font-size:13px; padding:2px 10px; border-radius:6px }
+
+  /* ── Minimap: small, bottom-right ── */
+  #minimap-wrap{ bottom:6px; right:6px }
+  #minimap{ width:66px; height:66px }
+  #minimap-label{ font-size:7px; margin-top:2px }
+
+  /* ── Joystick: smaller, bottom-left ── */
+  #joystick-zone{ width:86px; height:86px; bottom:6px; left:6px }
+
+  /* ── Hide things with no room ── */
+  #touch-hint{ display:none!important }
+  #controls{ display:none!important }
+
+  /* ── Splash: compact two-column feel ── */
+  #splash{
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+    padding:10px 20px;
+    overflow-y:auto;
+  }
+  #splash h1{ font-size:clamp(22px,6vh,34px); margin-bottom:0 }
+  #splash .subtitle{ font-size:9px; letter-spacing:3px; margin-bottom:8px }
+  #splash .word-preview{ font-size:clamp(22px,7vh,32px); letter-spacing:6px; margin-bottom:2px }
+  #splash .word-meaning{ font-size:9px; letter-spacing:1px; margin-bottom:12px }
+  #splash .start-btn{ font-size:13px; padding:9px 26px; letter-spacing:3px }
+
+  /* ── Winner: compact ── */
+  #winner-banner{ gap:0 }
+  #winner-text{ font-size:clamp(20px,6vh,34px); margin-bottom:6px }
+  #winner-sub{ font-size:10px; letter-spacing:2px; margin-bottom:16px }
+  #winner-banner button{ font-size:12px; padding:8px 22px; letter-spacing:3px }
+}
+
 </style>
 </head>
 <body>
