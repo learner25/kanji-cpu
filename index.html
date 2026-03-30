@@ -2,132 +2,178 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>漢字バトル — Kanji Battle</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Rajdhani:wght@600;700&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#0a0a0f; font-family:'Rajdhani',sans-serif; overflow:hidden; color:#fff; }
-  #canvas-container { position:fixed; inset:0; }
-  #ui-overlay { position:fixed; inset:0; pointer-events:none; z-index:10; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Rajdhani:wght@600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;touch-action:none}
+body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;color:#fff;user-select:none}
+#canvas-container{position:fixed;inset:0}
+#ui-overlay{position:fixed;inset:0;pointer-events:none;z-index:10}
 
-  .player-hud {
-    position:absolute; top:18px;
-    background:rgba(0,0,0,0.65); border:1px solid;
-    border-radius:12px; padding:12px 18px; min-width:200px;
-    backdrop-filter:blur(8px);
-  }
-  #hud-p1 { left:18px; border-color:#4fc3f7; }
-  #hud-p2 { right:18px; border-color:#ff8a65; }
-  .hud-name { font-size:13px; letter-spacing:3px; text-transform:uppercase; margin-bottom:6px; }
-  #hud-p1 .hud-name { color:#4fc3f7; }
-  #hud-p2 .hud-name { color:#ff8a65; }
-  .hud-score { font-size:32px; font-weight:700; line-height:1; }
-  #hud-p1 .hud-score { color:#e0f7fa; }
-  #hud-p2 .hud-score { color:#fbe9e7; }
-  .hud-kanji-row { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
-  .kanji-chip {
-    font-family:'Noto Serif JP',serif; font-size:18px;
-    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
-    border-radius:6px; background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.15); transition:all 0.3s;
-  }
-  .kanji-chip.collected-p1 { background:rgba(79,195,247,0.3); border-color:#4fc3f7; }
-  .kanji-chip.collected-p2 { background:rgba(255,138,101,0.3); border-color:#ff8a65; }
+/* ═══ HUD — both players ═══ */
+.player-hud{
+  position:absolute;top:10px;
+  background:rgba(0,0,0,0.72);border:1px solid;
+  border-radius:10px;padding:8px 12px;
+  backdrop-filter:blur(8px);
+  transition:all .2s;
+  max-width:42vw;
+}
+#hud-p1{left:10px;border-color:#4fc3f7}
+#hud-p2{right:10px;border-color:#ff8a65}
+.hud-name{font-size:clamp(9px,2vw,13px);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
+#hud-p1 .hud-name{color:#4fc3f7}
+#hud-p2 .hud-name{color:#ff8a65}
+.hud-score{font-size:clamp(22px,7vw,36px);font-weight:700;line-height:1}
+#hud-p1 .hud-score{color:#e0f7fa}
+#hud-p2 .hud-score{color:#fbe9e7}
+.hud-kanji-row{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap}
+.kanji-chip{
+  font-family:'Noto Serif JP',serif;
+  font-size:clamp(11px,3vw,18px);
+  width:clamp(22px,6vw,32px);height:clamp(22px,6vw,32px);
+  display:flex;align-items:center;justify-content:center;
+  border-radius:5px;background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);transition:all .3s;
+}
+.kanji-chip.collected-p1{background:rgba(79,195,247,.3);border-color:#4fc3f7}
+.kanji-chip.collected-p2{background:rgba(255,138,101,.3);border-color:#ff8a65}
 
-  #center-info {
-    position:absolute; top:18px; left:50%; transform:translateX(-50%);
-    text-align:center; background:rgba(0,0,0,0.65);
-    border:1px solid rgba(255,255,255,0.15); border-radius:12px;
-    padding:10px 22px; backdrop-filter:blur(8px); white-space:nowrap;
-  }
-  #word-display { font-family:'Noto Serif JP',serif; font-size:26px; letter-spacing:4px; color:#ffd54f; }
-  #word-label { font-size:11px; letter-spacing:2px; color:rgba(255,255,255,0.4); margin-top:2px; }
+/* ═══ CENTER INFO ═══ */
+#center-info{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  text-align:center;background:rgba(0,0,0,.72);
+  border:1px solid rgba(255,255,255,.15);border-radius:10px;
+  padding:7px 14px;backdrop-filter:blur(8px);white-space:nowrap;
+  pointer-events:none;
+}
+#word-display{font-family:'Noto Serif JP',serif;font-size:clamp(16px,5vw,26px);letter-spacing:3px;color:#ffd54f}
+#word-label{font-size:clamp(8px,2vw,11px);letter-spacing:2px;color:rgba(255,255,255,.4);margin-top:1px}
 
-  #timer-display {
-    position:absolute; top:108px; left:50%; transform:translateX(-50%);
-    font-size:22px; color:rgba(255,255,255,0.6); letter-spacing:2px;
-    text-align:center; pointer-events:none;
-    background:rgba(0,0,0,0.5); border-radius:8px; padding:4px 14px;
-    backdrop-filter:blur(6px);
-  }
-  #timer-display.urgent { color:#ff5252; animation:urgentPulse 0.5s infinite alternate; }
-  @keyframes urgentPulse { from{opacity:1} to{opacity:0.3} }
+/* ═══ TIMER ═══ */
+#timer-display{
+  position:absolute;top:clamp(75px,18vw,108px);left:50%;transform:translateX(-50%);
+  font-size:clamp(16px,5vw,22px);color:rgba(255,255,255,.65);letter-spacing:2px;
+  background:rgba(0,0,0,.55);border-radius:8px;padding:3px 12px;
+  backdrop-filter:blur(6px);pointer-events:none;
+}
+#timer-display.urgent{color:#ff5252;animation:urgentPulse .5s infinite alternate}
+@keyframes urgentPulse{from{opacity:1}to{opacity:.3}}
 
-  #controls {
-    position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
-    display:flex; gap:28px; background:rgba(0,0,0,0.6);
-    border:1px solid rgba(255,255,255,0.1); border-radius:10px;
-    padding:10px 20px; backdrop-filter:blur(8px);
-  }
-  .ctrl-group { text-align:center; }
-  .ctrl-keys { font-size:13px; letter-spacing:1px; margin-bottom:2px; color:#4fc3f7; }
-  .ctrl-label { font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:1px; }
+/* ═══ MINIMAP ═══ */
+#minimap-wrap{position:absolute;bottom:clamp(110px,28vw,160px);right:10px}
+#minimap{
+  width:clamp(70px,18vw,100px);height:clamp(70px,18vw,100px);
+  background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.18);
+  border-radius:8px;overflow:hidden;
+}
+#minimap canvas{width:100%;height:100%;display:block}
+#minimap-label{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.2);text-align:center;margin-top:3px}
 
-  #cursor-dot {
-    position:fixed; width:14px; height:14px; border-radius:50%;
-    background:#4fc3f7; border:2px solid #fff;
-    pointer-events:none; z-index:20; transform:translate(-50%,-50%);
-    display:none; box-shadow:0 0 10px #4fc3f7; transition:transform 0.06s;
-  }
-  #cursor-dot.active { transform:translate(-50%,-50%) scale(1.6); }
+/* ═══ CONTROLS HINT — desktop only ═══ */
+#controls{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:24px;background:rgba(0,0,0,.6);
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  padding:8px 18px;backdrop-filter:blur(8px);
+}
+.ctrl-group{text-align:center}
+.ctrl-keys{font-size:12px;letter-spacing:1px;margin-bottom:2px;color:#4fc3f7}
+.ctrl-label{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px}
+@media(max-width:600px){#controls{display:none}}
 
-  #splash {
-    position:fixed; inset:0; z-index:100;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background:rgba(0,0,0,0.9); backdrop-filter:blur(12px);
-  }
-  #splash h1 {
-    font-family:'Noto Serif JP',serif; font-size:58px; color:#ffd54f;
-    text-shadow:0 0 50px rgba(255,213,79,0.6); margin-bottom:8px;
-  }
-  #splash .subtitle { font-size:14px; letter-spacing:6px; color:rgba(255,255,255,0.35); margin-bottom:44px; }
-  #splash .word-preview { font-family:'Noto Serif JP',serif; font-size:46px; letter-spacing:14px; color:#fff; margin-bottom:8px; }
-  #splash .word-meaning { font-size:13px; letter-spacing:3px; color:rgba(255,255,255,0.3); margin-bottom:50px; }
-  #splash .start-btn {
-    pointer-events:all; cursor:pointer; background:#ffd54f; color:#0a0a0f;
-    border:none; font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700;
-    letter-spacing:4px; padding:14px 50px; border-radius:8px;
-    transition:transform 0.15s, box-shadow 0.15s; text-transform:uppercase;
-  }
-  #splash .start-btn:hover { transform:scale(1.04); box-shadow:0 0 32px rgba(255,213,79,0.5); }
+/* ═══ CURSOR DOT — desktop only ═══ */
+#cursor-dot{
+  position:fixed;width:14px;height:14px;border-radius:50%;
+  background:#4fc3f7;border:2px solid #fff;
+  pointer-events:none;z-index:20;transform:translate(-50%,-50%);
+  display:none;box-shadow:0 0 10px #4fc3f7;transition:transform .06s;
+}
+#cursor-dot.active{transform:translate(-50%,-50%) scale(1.6)}
+@media(hover:none){#cursor-dot{display:none!important}}
 
-  #winner-banner {
-    position:fixed; inset:0; z-index:200; display:none;
-    flex-direction:column; align-items:center; justify-content:center;
-    background:rgba(0,0,0,0.88); backdrop-filter:blur(14px);
-  }
-  #winner-banner.show { display:flex; }
-  #winner-text { font-family:'Noto Serif JP',serif; font-size:56px; margin-bottom:10px; text-shadow:0 0 60px currentColor; }
-  #winner-sub { font-size:14px; letter-spacing:4px; color:rgba(255,255,255,0.4); margin-bottom:40px; }
-  #winner-banner button {
-    pointer-events:all; cursor:pointer; background:transparent;
-    border:2px solid rgba(255,255,255,0.3); color:#fff;
-    font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600;
-    letter-spacing:4px; padding:12px 42px; border-radius:8px;
-    transition:all 0.2s; text-transform:uppercase;
-  }
-  #winner-banner button:hover { background:rgba(255,255,255,0.1); border-color:#fff; }
+/* ═══ JOYSTICK ═══ */
+#joystick-zone{
+  position:fixed;bottom:14px;left:14px;
+  width:clamp(100px,28vw,140px);height:clamp(100px,28vw,140px);
+  z-index:30;pointer-events:all;display:none;
+}
+#joystick-base{
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.18);
+}
+#joystick-knob{
+  position:absolute;
+  width:40%;height:40%;border-radius:50%;
+  background:rgba(79,195,247,.7);border:2px solid #4fc3f7;
+  box-shadow:0 0 14px rgba(79,195,247,.5);
+  top:30%;left:30%;
+  transition:background .15s;
+}
+#joystick-knob.active{background:rgba(79,195,247,.95)}
+@media(hover:none){#joystick-zone{display:block}}
 
-  .float-kanji {
-    position:fixed; font-family:'Noto Serif JP',serif; font-size:30px; font-weight:700;
-    pointer-events:none; z-index:50; animation:floatUp 1.2s ease-out forwards;
-  }
-  @keyframes floatUp {
-    0%  { opacity:1; transform:translateY(0) scale(1.3); }
-    100%{ opacity:0; transform:translateY(-90px) scale(0.6); }
-  }
+/* ═══ TOUCH HINT ═══ */
+#touch-hint{
+  position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.25);
+  pointer-events:none;z-index:20;display:none;white-space:nowrap;
+}
+@media(hover:none){#touch-hint{display:block}}
 
-  #minimap-wrap {
-    position:absolute; bottom:70px; right:18px;
-  }
-  #minimap {
-    width:120px; height:120px;
-    background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.15);
-    border-radius:8px; overflow:hidden;
-  }
-  #minimap canvas { width:100%; height:100%; display:block; }
-  #minimap-label { font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.22); text-align:center; margin-top:4px; }
+/* ═══ SPLASH ═══ */
+#splash{
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
+  padding:20px;text-align:center;
+}
+#splash h1{
+  font-family:'Noto Serif JP',serif;
+  font-size:clamp(34px,12vw,58px);color:#ffd54f;
+  text-shadow:0 0 50px rgba(255,213,79,.6);margin-bottom:6px;
+}
+#splash .subtitle{font-size:clamp(11px,3vw,14px);letter-spacing:5px;color:rgba(255,255,255,.35);margin-bottom:32px}
+#splash .word-preview{font-family:'Noto Serif JP',serif;font-size:clamp(28px,10vw,46px);letter-spacing:10px;color:#fff;margin-bottom:8px}
+#splash .word-meaning{font-size:clamp(11px,3vw,13px);letter-spacing:2px;color:rgba(255,255,255,.3);margin-bottom:40px}
+#splash .start-btn{
+  pointer-events:all;cursor:pointer;background:#ffd54f;color:#0a0a0f;
+  border:none;font-family:'Rajdhani',sans-serif;
+  font-size:clamp(14px,4vw,17px);font-weight:700;
+  letter-spacing:4px;padding:clamp(12px,3vw,14px) clamp(32px,8vw,50px);
+  border-radius:8px;transition:transform .15s,box-shadow .15s;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;
+}
+#splash .start-btn:active{transform:scale(.97)}
+
+/* ═══ WINNER ═══ */
+#winner-banner{
+  position:fixed;inset:0;z-index:200;display:none;padding:20px;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.9);backdrop-filter:blur(14px);text-align:center;
+}
+#winner-banner.show{display:flex}
+#winner-text{font-family:'Noto Serif JP',serif;font-size:clamp(30px,10vw,56px);margin-bottom:10px;text-shadow:0 0 60px currentColor}
+#winner-sub{font-size:clamp(11px,3vw,14px);letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:36px}
+#winner-banner button{
+  pointer-events:all;cursor:pointer;background:transparent;
+  border:2px solid rgba(255,255,255,.3);color:#fff;
+  font-family:'Rajdhani',sans-serif;font-size:clamp(13px,3vw,15px);
+  font-weight:600;letter-spacing:4px;
+  padding:clamp(10px,2.5vw,12px) clamp(28px,8vw,42px);
+  border-radius:8px;transition:all .2s;text-transform:uppercase;
+}
+#winner-banner button:active{background:rgba(255,255,255,.1)}
+
+/* ═══ FLOAT KANJI ═══ */
+.float-kanji{
+  position:fixed;font-family:'Noto Serif JP',serif;
+  font-size:clamp(20px,7vw,30px);font-weight:700;
+  pointer-events:none;z-index:50;animation:floatUp 1.2s ease-out forwards;
+}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1.3)}100%{opacity:0;transform:translateY(-80px) scale(.6)}}
 </style>
 </head>
 <body>
@@ -135,6 +181,14 @@
 <div id="canvas-container"></div>
 <div id="cursor-dot"></div>
 
+<!-- JOYSTICK (mobile) -->
+<div id="joystick-zone">
+  <div id="joystick-base"></div>
+  <div id="joystick-knob"></div>
+</div>
+<div id="touch-hint">DRAG JOYSTICK TO MOVE</div>
+
+<!-- GAME UI -->
 <div id="ui-overlay">
   <div class="player-hud" id="hud-p1">
     <div class="hud-name">You</div>
@@ -157,17 +211,18 @@
 
   <div id="controls">
     <div class="ctrl-group">
-      <div class="ctrl-keys">HOLD MOUSE BUTTON</div>
+      <div class="ctrl-keys">HOLD MOUSE</div>
       <div class="ctrl-label">MOVE PLAYER</div>
     </div>
   </div>
 
   <div id="minimap-wrap">
-    <div id="minimap"><canvas id="mm" width="120" height="120"></canvas></div>
+    <div id="minimap"><canvas id="mm" width="100" height="100"></canvas></div>
     <div id="minimap-label">MINIMAP</div>
   </div>
 </div>
 
+<!-- SPLASH -->
 <div id="splash">
   <h1>漢字バトル</h1>
   <div class="subtitle">KANJI BATTLE</div>
@@ -176,6 +231,7 @@
   <button class="start-btn" onclick="startGame()">START GAME</button>
 </div>
 
+<!-- WINNER -->
 <div id="winner-banner">
   <div id="winner-text"></div>
   <div id="winner-sub"></div>
@@ -183,10 +239,10 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<<script>
-// ═══════════════════════════════════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════════════════════════════════
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
 const WORDS = [
   { kanji:'友情', meaning:'Friendship (Yuujou)',   chars:['友','情'] },
   { kanji:'勇気', meaning:'Courage (Yuuki)',        chars:['勇','気'] },
@@ -196,26 +252,89 @@ const WORDS = [
   { kanji:'風林火山', meaning:'Swift as Wind',      chars:['風','林','火','山'] },
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
 let scene, camera, renderer, clock;
 const MAP = 28;
 let players = [], kanjiItems = [];
 let gameActive = false, currentWord = null, animFrameId;
 let timeLeft = 90, timerAcc = 0;
 
-// mouse
-const raycaster   = new THREE.Raycaster();
-const mouse2d     = new THREE.Vector2();
-const mouseWorld  = new THREE.Vector3();
-let   mouseDown   = false;
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  INPUT
-// ═══════════════════════════════════════════════════════════════════════════
+// ── MOUSE INPUT ──────────────────────────────────────────────
+const raycaster  = new THREE.Raycaster();
+const mouse2d    = new THREE.Vector2();
+const mouseWorld = new THREE.Vector3();
+let   mouseDown  = false;
 const dot = document.getElementById('cursor-dot');
 
+// ── JOYSTICK INPUT ───────────────────────────────────────────
+const joystickZone = document.getElementById('joystick-zone');
+const joystickKnob = document.getElementById('joystick-knob');
+let joystickVec    = new THREE.Vector3(); // normalized direction from joystick
+let joystickActive = false;
+let joystickTouchId= null;
+let joyBaseRect    = null;
+
+function getJoyCenter() {
+  joyBaseRect = joystickZone.getBoundingClientRect();
+  return {
+    cx: joyBaseRect.left + joyBaseRect.width  / 2,
+    cy: joyBaseRect.top  + joyBaseRect.height / 2,
+  };
+}
+
+function updateJoystickKnob(tx, ty) {
+  const { cx, cy } = getJoyCenter();
+  const maxR = joyBaseRect.width * 0.38;
+  let dx = tx - cx, dy = ty - cy;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > maxR) { dx = dx/dist*maxR; dy = dy/dist*maxR; }
+
+  const pct = joyBaseRect.width / 2;
+  joystickKnob.style.left = (pct + dx - joystickKnob.offsetWidth/2)  + 'px';
+  joystickKnob.style.top  = (pct + dy - joystickKnob.offsetHeight/2) + 'px';
+
+  if (dist > 6) {
+    joystickVec.set(dx/maxR, 0, dy/maxR);
+    joystickActive = true;
+  } else {
+    joystickVec.set(0,0,0);
+    joystickActive = false;
+  }
+}
+
+function resetJoystick() {
+  joystickActive  = false;
+  joystickTouchId = null;
+  joystickVec.set(0,0,0);
+  const pct = joystickZone.offsetWidth  / 2;
+  const pct2= joystickZone.offsetHeight / 2;
+  joystickKnob.style.left = (pct  - joystickKnob.offsetWidth /2) + 'px';
+  joystickKnob.style.top  = (pct2 - joystickKnob.offsetHeight/2) + 'px';
+  joystickKnob.classList.remove('active');
+}
+
+joystickZone.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (joystickTouchId !== null) return;
+  const t = e.changedTouches[0];
+  joystickTouchId = t.identifier;
+  joystickKnob.classList.add('active');
+  updateJoystickKnob(t.clientX, t.clientY);
+}, { passive:false });
+
+joystickZone.addEventListener('touchmove', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (t.identifier === joystickTouchId) { updateJoystickKnob(t.clientX, t.clientY); break; }
+  }
+}, { passive:false });
+
+joystickZone.addEventListener('touchend',    e => { for(const t of e.changedTouches) if(t.identifier===joystickTouchId) { resetJoystick(); break; } });
+joystickZone.addEventListener('touchcancel', e => { resetJoystick(); });
+
+// ── MOUSE INPUT ───────────────────────────────────────────────
 document.addEventListener('mousemove', e => {
   dot.style.left = e.clientX + 'px';
   dot.style.top  = e.clientY + 'px';
@@ -226,17 +345,46 @@ document.addEventListener('mousemove', e => {
   raycaster.setFromCamera(mouse2d, camera);
   raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0), 0), mouseWorld);
 });
-document.addEventListener('mousedown', () => {
-  if (!gameActive) return;
-  mouseDown = true; dot.classList.add('active');
-});
-document.addEventListener('mouseup', () => {
-  mouseDown = false; dot.classList.remove('active');
-});
+document.addEventListener('mousedown', () => { if (!gameActive) return; mouseDown = true;  dot.classList.add('active'); });
+document.addEventListener('mouseup',   () => {                           mouseDown = false; dot.classList.remove('active'); });
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  WORD
-// ═══════════════════════════════════════════════════════════════════════════
+// ── CANVAS TOUCH (tap-to-move fallback on non-joystick area) ─
+document.getElementById('canvas-container').addEventListener('touchstart', e => {
+  if (!gameActive || !renderer) return;
+  // ignore if touch is on joystick zone
+  const t = e.touches[0];
+  const jRect = joystickZone.getBoundingClientRect();
+  if (t.clientX >= jRect.left && t.clientX <= jRect.right &&
+      t.clientY >= jRect.top  && t.clientY <= jRect.bottom) return;
+  e.preventDefault();
+  updateMouseWorldFromTouch(t);
+  mouseDown = true;
+}, { passive:false });
+
+document.getElementById('canvas-container').addEventListener('touchmove', e => {
+  if (!gameActive || !renderer || !mouseDown) return;
+  const t = e.touches[0];
+  const jRect = joystickZone.getBoundingClientRect();
+  if (t.clientX >= jRect.left && t.clientX <= jRect.right &&
+      t.clientY >= jRect.top  && t.clientY <= jRect.bottom) return;
+  e.preventDefault();
+  updateMouseWorldFromTouch(t);
+}, { passive:false });
+
+document.getElementById('canvas-container').addEventListener('touchend',    () => { mouseDown = false; });
+document.getElementById('canvas-container').addEventListener('touchcancel', () => { mouseDown = false; });
+
+function updateMouseWorldFromTouch(touch) {
+  const r = renderer.domElement.getBoundingClientRect();
+  mouse2d.x =  ((touch.clientX - r.left) / r.width)  * 2 - 1;
+  mouse2d.y = -((touch.clientY - r.top)  / r.height) * 2 + 1;
+  raycaster.setFromCamera(mouse2d, camera);
+  raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0), 0), mouseWorld);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WORD
+// ═══════════════════════════════════════════════════════════════
 function pickWord() {
   currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
   document.getElementById('word-display').textContent   = currentWord.kanji;
@@ -245,495 +393,439 @@ function pickWord() {
 }
 pickWord();
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  INIT THREE.JS
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// INIT THREE.JS
+// ═══════════════════════════════════════════════════════════════
 function initThree() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0d0d1a);
   scene.fog = new THREE.FogExp2(0x0d0d1a, 0.016);
   clock = new THREE.Clock();
 
-  camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 200);
+  camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, 0.1, 200);
   camera.position.set(-16, 9, -7);
   camera.lookAt(-16, 0, -16);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-  
+  scene.add(new THREE.AmbientLight(0x1a2a44, 1.4));
+  const sun = new THREE.DirectionalLight(0xfff4e0, 2.4);
+  sun.position.set(12,32,12); sun.castShadow=true;
+  sun.shadow.mapSize.set(1024,1024); // lower on mobile
+  sun.shadow.camera.left=sun.shadow.camera.bottom=-36;
+  sun.shadow.camera.right=sun.shadow.camera.top=36;
+  sun.shadow.camera.far=110;
+  scene.add(sun);
+  const l1=new THREE.PointLight(0x4fc3f7,1.2,80); l1.position.set(-14,12,-14); scene.add(l1);
+  const l2=new THREE.PointLight(0xff8a65,0.9,80); l2.position.set( 14,12, 14); scene.add(l2);
+
   buildMap();
-  dot.style.display = 'block';
+  // show cursor dot only on desktop
+  if (window.matchMedia('(hover:hover)').matches) dot.style.display = 'block';
   window.addEventListener('resize', onResize);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  MAP
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════════
 function buildMap() {
-
-  scene.add(new THREE.AmbientLight(0x1a2a44, 1.4));
-  const sun = new THREE.DirectionalLight(0xfff4e0, 2.4);
-  sun.position.set(12, 32, 12); sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.camera.left = sun.shadow.camera.bottom = -36;
-  sun.shadow.camera.right = sun.shadow.camera.top = 36;
-  sun.shadow.camera.far = 110;
-  scene.add(sun);
-  const l1 = new THREE.PointLight(0x4fc3f7, 1.2, 80); l1.position.set(-14, 12, -14); scene.add(l1);
-  const l2 = new THREE.PointLight(0xff8a65, 0.9, 80); l2.position.set( 14, 12,  14); scene.add(l2);
-
-  // ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(MAP * 2, MAP * 2, 40, 40),
-    new THREE.MeshStandardMaterial({ color: 0x141428, roughness: 0.95 })
+  const gnd = new THREE.Mesh(
+    new THREE.PlaneGeometry(MAP*2,MAP*2,20,20),
+    new THREE.MeshStandardMaterial({color:0x141428,roughness:0.95})
   );
-  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-  const grid = new THREE.GridHelper(MAP * 2, 28, 0x1a2a50, 0x0e1830);
-  grid.position.y = 0.02; scene.add(grid);
+  gnd.rotation.x=-Math.PI/2; gnd.receiveShadow=true; scene.add(gnd);
+  const grid=new THREE.GridHelper(MAP*2,28,0x1a2a50,0x0e1830);
+  grid.position.y=0.02; scene.add(grid);
 
-  // walls
-  const wMat = new THREE.MeshStandardMaterial({ color: 0x0c2850, roughness: 0.65, metalness: 0.5 });
-  [[MAP*2+0.6, 2.8, 0.6,   0,   1.4, -MAP],
-   [MAP*2+0.6, 2.8, 0.6,   0,   1.4,  MAP],
-   [0.6, 2.8, MAP*2,      -MAP, 1.4,   0 ],
-   [0.6, 2.8, MAP*2,       MAP, 1.4,   0 ]
-  ].forEach(([w,h,d,x,y,z]) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wMat);
-    m.position.set(x,y,z); m.castShadow = m.receiveShadow = true; scene.add(m);
+  const wm=new THREE.MeshStandardMaterial({color:0x0c2850,roughness:0.65,metalness:0.5});
+  [[MAP*2+.6,2.8,.6, 0,  1.4,-MAP],[MAP*2+.6,2.8,.6,0,1.4,MAP],
+   [.6,2.8,MAP*2,-MAP,1.4,0],[.6,2.8,MAP*2,MAP,1.4,0]]
+  .forEach(([w,h,d,x,y,z])=>{
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),wm);
+    m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; scene.add(m);
   });
 
-  // pillars
-  const pMat = new THREE.MeshStandardMaterial({ color: 0x0e1e3a, roughness: 0.5, metalness: 0.7 });
-  const cMat = new THREE.MeshStandardMaterial({ color: 0x162d5a, metalness: 0.85, roughness: 0.25 });
+  const pm=new THREE.MeshStandardMaterial({color:0x0e1e3a,roughness:0.5,metalness:0.7});
+  const cm=new THREE.MeshStandardMaterial({color:0x162d5a,metalness:0.85,roughness:0.25});
   [[-10,-10],[10,-10],[-10,10],[10,10],[-18,0],[18,0],[0,-18],[0,18],[-14,-14],[14,-14],[-14,14],[14,14]]
-  .forEach(([x,z]) => {
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.65,3.2,10), pMat);
-    p.position.set(x, 1.6, z); p.castShadow = true; scene.add(p);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.68,10,7), cMat);
-    cap.position.set(x, 3.4, z); scene.add(cap);
-    const gl = new THREE.PointLight(0x3355aa, 0.55, 8);
-    gl.position.set(x, 3.6, z); scene.add(gl);
+  .forEach(([x,z])=>{
+    const p=new THREE.Mesh(new THREE.CylinderGeometry(.5,.65,3.2,8),pm);
+    p.position.set(x,1.6,z); p.castShadow=true; scene.add(p);
+    const c=new THREE.Mesh(new THREE.SphereGeometry(.68,8,6),cm);
+    c.position.set(x,3.4,z); scene.add(c);
+    const gl=new THREE.PointLight(0x3355aa,.55,8); gl.position.set(x,3.6,z); scene.add(gl);
   });
 
-  // rocks
-  const rMat = new THREE.MeshStandardMaterial({ color: 0x1a2535, roughness: 0.9 });
-  [[-5,5],[5,-5],[8,12],[-8,-12],[12,-8],[-12,8],[3,15],[-3,-15],[7,-18],[-7,18]].forEach(([x,z]) => {
-    const w = 1.4 + Math.random() * 1.2, h = 0.9 + Math.random() * 1.8;
-    const r = new THREE.Mesh(new THREE.BoxGeometry(w,h,w), rMat);
-    r.position.set(x, h/2, z); r.rotation.y = Math.random() * Math.PI;
-    r.castShadow = r.receiveShadow = true; scene.add(r);
+  const rm=new THREE.MeshStandardMaterial({color:0x1a2535,roughness:0.9});
+  [[-5,5],[5,-5],[8,12],[-8,-12],[12,-8],[-12,8],[3,15],[-3,-15],[7,-18],[-7,18]].forEach(([x,z])=>{
+    const w=1.4+Math.random()*1.2, h=0.9+Math.random()*1.8;
+    const r=new THREE.Mesh(new THREE.BoxGeometry(w,h,w),rm);
+    r.position.set(x,h/2,z); r.rotation.y=Math.random()*Math.PI;
+    r.castShadow=r.receiveShadow=true; scene.add(r);
   });
 
-  // floor glows
-  for (let i = 0; i < 10; i++) {
-    const m = new THREE.Mesh(
-      new THREE.CircleGeometry(1.2 + Math.random() * 1.5, 32),
-      new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0x08204a : 0x180a2e, transparent: true, opacity: 0.55 })
+  for(let i=0;i<8;i++){
+    const m=new THREE.Mesh(
+      new THREE.CircleGeometry(1.2+Math.random()*1.5,16),
+      new THREE.MeshBasicMaterial({color:Math.random()>.5?0x08204a:0x180a2e,transparent:true,opacity:.55})
     );
-    const a = (i / 10) * Math.PI * 2, r = 6 + Math.random() * 10;
-    m.rotation.x = -Math.PI / 2; m.position.set(Math.cos(a)*r, 0.025, Math.sin(a)*r); scene.add(m);
+    const a=(i/8)*Math.PI*2, r=6+Math.random()*10;
+    m.rotation.x=-Math.PI/2; m.position.set(Math.cos(a)*r,.025,Math.sin(a)*r); scene.add(m);
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  PLAYER
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// PLAYER
+// ═══════════════════════════════════════════════════════════════
 function createPlayer(index) {
-  const isP1    = index === 0;
-  const bodyCol = isP1 ? 0x4fc3f7 : 0xff8a65;
-  const darkCol = isP1 ? 0x0277bd : 0xbf360c;
-  const glowCol = isP1 ? 0x81d4fa : 0xffab91;
-  const g = new THREE.Group();
+  const isP1=index===0;
+  const bodyCol=isP1?0x4fc3f7:0xff8a65;
+  const darkCol=isP1?0x0277bd:0xbf360c;
+  const glowCol=isP1?0x81d4fa:0xffab91;
+  const g=new THREE.Group();
 
-  // shadow
-  const shd = new THREE.Mesh(new THREE.CircleGeometry(0.58, 32),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32 }));
-  shd.rotation.x = -Math.PI / 2; shd.position.y = 0.012; g.add(shd);
+  const shd=new THREE.Mesh(new THREE.CircleGeometry(.58,24),
+    new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.32}));
+  shd.rotation.x=-Math.PI/2; shd.position.y=.012; g.add(shd);
 
-  // legs
-  const legMat = new THREE.MeshStandardMaterial({ color: darkCol, roughness: 0.5 });
-  [-0.19, 0.19].forEach((xo, i) => {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.55, 8), legMat);
-    leg.position.set(xo, 0.28, 0); leg.name = `leg${i}`; g.add(leg);
+  const lm=new THREE.MeshStandardMaterial({color:darkCol,roughness:.5});
+  [-.19,.19].forEach((xo,i)=>{
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.13,.1,.55,8),lm);
+    leg.position.set(xo,.28,0); leg.name='leg'+i; g.add(leg);
   });
 
-  // torso
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.22, 0.82, 12),
-    new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.38, metalness: 0.22,
-      emissive: bodyCol, emissiveIntensity: 0.1 }));
-  torso.position.y = 0.92; torso.castShadow = true; g.add(torso);
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.29,.22,.82,10),
+    new THREE.MeshStandardMaterial({color:bodyCol,roughness:.38,metalness:.22,emissive:bodyCol,emissiveIntensity:.1}));
+  torso.position.y=.92; torso.castShadow=true; g.add(torso);
 
-  // arms
-  const armMat = new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.38 });
-  [-0.44, 0.44].forEach(xo => {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.52, 8), armMat);
-    arm.position.set(xo, 0.92, 0); arm.rotation.z = xo > 0 ? -0.42 : 0.42;
-    arm.castShadow = true; g.add(arm);
+  const am=new THREE.MeshStandardMaterial({color:bodyCol,roughness:.38});
+  [-.44,.44].forEach(xo=>{
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.09,.07,.52,8),am);
+    arm.position.set(xo,.92,0); arm.rotation.z=xo>0?-.42:.42; arm.castShadow=true; g.add(arm);
   });
 
-  // neck + head
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.2, 8),
-    new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.6 }));
-  neck.position.y = 1.46; g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12),
-    new THREE.MeshStandardMaterial({ color: 0xffccaa, roughness: 0.5 }));
-  head.position.y = 1.85; head.castShadow = true; g.add(head);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.12,.15,.2,8),
+    new THREE.MeshStandardMaterial({color:0xffccaa,roughness:.6}));
+  neck.position.y=1.46; g.add(neck);
 
-  // eyes
-  const eyeMat = new THREE.MeshBasicMaterial({ color: darkCol });
-  [-0.11, 0.11].forEach(xo => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), eyeMat);
-    eye.position.set(xo, 1.9, 0.27); g.add(eye);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.31,12,10),
+    new THREE.MeshStandardMaterial({color:0xffccaa,roughness:.5}));
+  head.position.y=1.85; head.castShadow=true; g.add(head);
+
+  [-.11,.11].forEach(xo=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.055,6,6),
+      new THREE.MeshBasicMaterial({color:darkCol}));
+    eye.position.set(xo,1.9,.27); g.add(eye);
   });
 
-  // hat
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.29, 0.42, 8),
-    new THREE.MeshStandardMaterial({ color: darkCol, roughness: 0.6 }));
-  hat.position.y = 2.26; g.add(hat);
+  const hat=new THREE.Mesh(new THREE.ConeGeometry(.29,.42,8),
+    new THREE.MeshStandardMaterial({color:darkCol,roughness:.6}));
+  hat.position.y=2.26; g.add(hat);
 
-  // ring
-  const ring = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.68, 32),
-    new THREE.MeshBasicMaterial({ color: glowCol, transparent: true, opacity: 0.65, side: THREE.DoubleSide }));
-  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.055; ring.name = 'ring'; g.add(ring);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.52,.68,24),
+    new THREE.MeshBasicMaterial({color:glowCol,transparent:true,opacity:.65,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=.055; ring.name='ring'; g.add(ring);
 
-  // billboard label
-  const lc = document.createElement('canvas'); lc.width = 128; lc.height = 48;
-  const lx = lc.getContext('2d');
-  lx.fillStyle = isP1 ? '#4fc3f7' : '#ff8a65';
-  lx.font = 'bold 34px Rajdhani,sans-serif';
-  lx.textAlign = 'center'; lx.textBaseline = 'middle';
-  lx.fillText(isP1 ? 'YOU' : 'CPU', 64, 24);
-  const lbl = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.42),
-    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(lc), transparent: true, depthTest: false }));
-  lbl.position.y = 2.78; lbl.name = 'label'; g.add(lbl);
+  const lc=document.createElement('canvas'); lc.width=128; lc.height=48;
+  const lx=lc.getContext('2d');
+  lx.fillStyle=isP1?'#4fc3f7':'#ff8a65';
+  lx.font='bold 34px Rajdhani,sans-serif';
+  lx.textAlign='center'; lx.textBaseline='middle';
+  lx.fillText(isP1?'YOU':'CPU',64,24);
+  const lbl=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.42),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,depthTest:false}));
+  lbl.position.y=2.78; lbl.name='label'; g.add(lbl);
 
-  g.position.set(isP1 ? -16 : 16, 0, isP1 ? -16 : 16);
+  g.position.set(isP1?-16:16, 0, isP1?-16:16);
   scene.add(g);
-
-  return {
-    group: g, ring,
-    score: 0, collected: [],
-    speed: isP1 ? 7 : 5.5,
-    bobTime: Math.random() * Math.PI * 2,
-    cpuTarget: null, cpuTimer: 0,
-  };
+  return { group:g, ring, score:0, collected:[],
+    speed:isP1?7:5.5, bobTime:Math.random()*Math.PI*2,
+    cpuTarget:null, cpuTimer:0 };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  KANJI ITEMS
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// KANJI ITEMS
+// ═══════════════════════════════════════════════════════════════
 function makeKanjiTex(char, col) {
-  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
-  const ctx = c.getContext('2d');
-  ctx.shadowColor = '#' + col.toString(16).padStart(6,'0'); ctx.shadowBlur = 28;
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 82px "Noto Serif JP",serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(char, 64, 64);
+  const c=document.createElement('canvas'); c.width=128; c.height=128;
+  const ctx=c.getContext('2d');
+  ctx.shadowColor='#'+col.toString(16).padStart(6,'0'); ctx.shadowBlur=28;
+  ctx.fillStyle='#fff'; ctx.font='bold 82px "Noto Serif JP",serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(char,64,64);
   return new THREE.CanvasTexture(c);
 }
 
 function spawnKanjiItems() {
-  kanjiItems.forEach(k => scene.remove(k.group));
-  kanjiItems = [];
-  const chars   = currentWord.chars;
-  const total   = chars.length * 5;
-  const palette = [0xffd54f, 0x80deea, 0xce93d8, 0xf48fb1, 0xa5d6a7];
-
-  for (let i = 0; i < total; i++) {
-    const char = chars[i % chars.length];
-    const col  = palette[i % palette.length];
-    const grp  = new THREE.Group();
-
-    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.14, 16),
-      new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, roughness: 0.28 }));
-    grp.add(ped);
-
-    const card = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.92, 0.07),
-      new THREE.MeshStandardMaterial({ map: makeKanjiTex(char, col), transparent: true,
-        roughness: 0.28, metalness: 0.22, emissive: new THREE.Color(col), emissiveIntensity: 0.22 }));
-    card.position.y = 0.72; grp.add(card);
-
-    const light = new THREE.PointLight(col, 1.0, 5); light.position.y = 0.8; grp.add(light);
-
-    let x, z;
-    do { x = (Math.random()-0.5)*(MAP*1.65); z = (Math.random()-0.5)*(MAP*1.65); }
-    while (Math.sqrt(x*x+z*z) < 3);
-
-    grp.position.set(x, 0.07, z);
-    scene.add(grp);
-    kanjiItems.push({ group: grp, char, card, light, collected: false, floatOff: Math.random()*Math.PI*2 });
+  kanjiItems.forEach(k=>scene.remove(k.group)); kanjiItems=[];
+  const chars=currentWord.chars, total=chars.length*5;
+  const pal=[0xffd54f,0x80deea,0xce93d8,0xf48fb1,0xa5d6a7];
+  for(let i=0;i<total;i++){
+    const char=chars[i%chars.length], col=pal[i%pal.length];
+    const grp=new THREE.Group();
+    grp.add(new THREE.Mesh(new THREE.CylinderGeometry(.52,.52,.14,12),
+      new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.55,roughness:.28})));
+    const card=new THREE.Mesh(new THREE.BoxGeometry(.92,.92,.07),
+      new THREE.MeshStandardMaterial({map:makeKanjiTex(char,col),transparent:true,
+        roughness:.28,metalness:.22,emissive:new THREE.Color(col),emissiveIntensity:.22}));
+    card.position.y=.72; grp.add(card);
+    const light=new THREE.PointLight(col,1.0,5); light.position.y=.8; grp.add(light);
+    let x,z;
+    do{x=(Math.random()-.5)*(MAP*1.65);z=(Math.random()-.5)*(MAP*1.65);}
+    while(Math.sqrt(x*x+z*z)<3);
+    grp.position.set(x,.07,z); scene.add(grp);
+    kanjiItems.push({group:grp,char,card,light,collected:false,floatOff:Math.random()*Math.PI*2});
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  HUD
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════════════════════════════
 function updateHUD() {
-  const chars = currentWord.chars;
-  ['p1','p2'].forEach((pid, pi) => {
-    document.getElementById(`score-${pid}`).textContent = players[pi].score;
-    const row = document.getElementById(`kanji-${pid}`);
-    row.innerHTML = '';
-    chars.forEach(char => {
-      const count = players[pi].collected.filter(c => c === char).length;
-      for (let j = 0; j < 5; j++) {
-        const chip = document.createElement('div');
-        chip.className = 'kanji-chip' + (j < count ? ` collected-${pid}` : '');
-        chip.textContent = j < count ? char : '？';
-        row.appendChild(chip);
+  const chars=currentWord.chars;
+  ['p1','p2'].forEach((pid,pi)=>{
+    document.getElementById('score-'+pid).textContent=players[pi].score;
+    const row=document.getElementById('kanji-'+pid); row.innerHTML='';
+    chars.forEach(char=>{
+      const count=players[pi].collected.filter(c=>c===char).length;
+      for(let j=0;j<5;j++){
+        const chip=document.createElement('div');
+        chip.className='kanji-chip'+(j<count?' collected-'+pid:'');
+        chip.textContent=j<count?char:'？'; row.appendChild(chip);
       }
     });
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  FLOAT FX & SCREEN PROJECTION
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// FLOAT FX
+// ═══════════════════════════════════════════════════════════════
 function worldToScreen(pos) {
-  const v = pos.clone().project(camera);
-  return { x: (v.x*0.5+0.5)*innerWidth, y: (-v.y*0.5+0.5)*innerHeight };
+  const v=pos.clone().project(camera);
+  return{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight};
 }
-
-function spawnFloatKanji(char, worldPos, isP1) {
-  const sp = worldToScreen(worldPos);
-  const el = document.createElement('div');
-  el.className = 'float-kanji'; el.textContent = char;
-  el.style.left = sp.x + 'px'; el.style.top = sp.y + 'px';
-  el.style.color = isP1 ? '#4fc3f7' : '#ff8a65';
+function spawnFloatKanji(char,worldPos,isP1){
+  const sp=worldToScreen(worldPos);
+  const el=document.createElement('div');
+  el.className='float-kanji'; el.textContent=char;
+  el.style.left=sp.x+'px'; el.style.top=sp.y+'px';
+  el.style.color=isP1?'#4fc3f7':'#ff8a65';
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1300);
+  setTimeout(()=>el.remove(),1300);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  MINIMAP
-// ═══════════════════════════════════════════════════════════════════════════
-function drawMinimap() {
-  const cv  = document.getElementById('mm');
-  const ctx = cv.getContext('2d');
-  const W = 120, H = 120, scale = W / (MAP * 2);
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(8,8,20,0.92)'; ctx.fillRect(0,0,W,H);
-
-  // kanji
-  kanjiItems.forEach(item => {
-    if (item.collected) return;
-    const mx = (item.group.position.x + MAP) * scale;
-    const mz = (item.group.position.z + MAP) * scale;
-    ctx.beginPath(); ctx.arc(mx, mz, 2.2, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(255,213,79,0.85)'; ctx.fill();
+// ═══════════════════════════════════════════════════════════════
+// MINIMAP
+// ═══════════════════════════════════════════════════════════════
+function drawMinimap(){
+  const cv=document.getElementById('mm');
+  const ctx=cv.getContext('2d');
+  const W=cv.width, scale=W/(MAP*2);
+  ctx.clearRect(0,0,W,W);
+  ctx.fillStyle='rgba(8,8,20,.92)'; ctx.fillRect(0,0,W,W);
+  kanjiItems.forEach(item=>{
+    if(!item.group.visible)return;
+    ctx.beginPath(); ctx.arc((item.group.position.x+MAP)*scale,(item.group.position.z+MAP)*scale,2,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,213,79,.85)'; ctx.fill();
   });
-
-  // players
-  [[players[0],'#4fc3f7'], [players[1],'#ff8a65']].forEach(([p, col]) => {
-    if (!p) return;
-    const mx = (p.group.position.x + MAP) * scale;
-    const mz = (p.group.position.z + MAP) * scale;
-    ctx.beginPath(); ctx.arc(mx, mz, 4.5, 0, Math.PI*2);
-    ctx.fillStyle = col; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke();
+  [[players[0],'#4fc3f7'],[players[1],'#ff8a65']].forEach(([p,col])=>{
+    if(!p)return;
+    const mx=(p.group.position.x+MAP)*scale, mz=(p.group.position.z+MAP)*scale;
+    ctx.beginPath(); ctx.arc(mx,mz,4,0,Math.PI*2);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  CPU AI
-// ═══════════════════════════════════════════════════════════════════════════
-function getCPUMove(cpu, delta) {
-  cpu.cpuTimer -= delta;
-  if (cpu.cpuTimer <= 0 || !cpu.cpuTarget || cpu.cpuTarget.collected) {
-    cpu.cpuTimer = 0.7 + Math.random() * 0.9;
-    const available = kanjiItems.filter(k => !k.collected);
-    if (!available.length) return new THREE.Vector3();
-    if (Math.random() < 0.75) {
-      available.sort((a,b) =>
-        cpu.group.position.distanceToSquared(a.group.position) -
-        cpu.group.position.distanceToSquared(b.group.position)
-      );
-      cpu.cpuTarget = available[0];
-    } else {
-      cpu.cpuTarget = available[Math.floor(Math.random() * available.length)];
-    }
+// ═══════════════════════════════════════════════════════════════
+// CPU AI
+// ═══════════════════════════════════════════════════════════════
+function getCPUMove(cpu,delta){
+  cpu.cpuTimer-=delta;
+  if(cpu.cpuTimer<=0||!cpu.cpuTarget||cpu.cpuTarget.collected){
+    cpu.cpuTimer=0.7+Math.random()*.9;
+    const available=kanjiItems.filter(k=>!k.collected);
+    if(!available.length)return new THREE.Vector3();
+    if(Math.random()<.75){
+      available.sort((a,b)=>cpu.group.position.distanceToSquared(a.group.position)-cpu.group.position.distanceToSquared(b.group.position));
+      cpu.cpuTarget=available[0];
+    }else cpu.cpuTarget=available[Math.floor(Math.random()*available.length)];
   }
-  if (!cpu.cpuTarget) return new THREE.Vector3();
+  if(!cpu.cpuTarget)return new THREE.Vector3();
   return new THREE.Vector3(
-    cpu.cpuTarget.group.position.x - cpu.group.position.x,
-    0,
-    cpu.cpuTarget.group.position.z - cpu.group.position.z
+    cpu.cpuTarget.group.position.x-cpu.group.position.x,0,
+    cpu.cpuTarget.group.position.z-cpu.group.position.z
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  MOVE + ANIMATE PLAYER
-// ═══════════════════════════════════════════════════════════════════════════
-function movePlayer(player, dir, delta) {
-  if (dir.lengthSq() < 0.001) { player.group.position.y = 0; return; }
-  dir.normalize().multiplyScalar(player.speed * delta);
+// ═══════════════════════════════════════════════════════════════
+// MOVE PLAYER
+// ═══════════════════════════════════════════════════════════════
+function movePlayer(player,dir,delta){
+  if(dir.lengthSq()<0.001){player.group.position.y=0;return;}
+  dir.normalize().multiplyScalar(player.speed*delta);
   player.group.position.add(dir);
-  player.group.rotation.y = Math.atan2(dir.x, dir.z);
-  player.bobTime += delta * 8;
-  player.group.position.y = Math.abs(Math.sin(player.bobTime)) * 0.13;
-  const legs = player.group.children.filter(c => c.name && c.name.startsWith('leg'));
-  if (legs.length >= 2) {
-    legs[0].rotation.x =  Math.sin(player.bobTime) * 0.52;
-    legs[1].rotation.x = -Math.sin(player.bobTime) * 0.52;
-  }
-  const B = MAP - 1;
-  player.group.position.x = Math.max(-B, Math.min(B, player.group.position.x));
-  player.group.position.z = Math.max(-B, Math.min(B, player.group.position.z));
+  player.group.rotation.y=Math.atan2(dir.x,dir.z);
+  player.bobTime+=delta*8;
+  player.group.position.y=Math.abs(Math.sin(player.bobTime))*.13;
+  const legs=player.group.children.filter(c=>c.name&&c.name.startsWith('leg'));
+  if(legs.length>=2){legs[0].rotation.x=Math.sin(player.bobTime)*.52;legs[1].rotation.x=-Math.sin(player.bobTime)*.52;}
+  const B=MAP-1;
+  player.group.position.x=Math.max(-B,Math.min(B,player.group.position.x));
+  player.group.position.z=Math.max(-B,Math.min(B,player.group.position.z));
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  COLLISIONS
-// ═══════════════════════════════════════════════════════════════════════════
-function checkCollisions() {
-  players.forEach((player, pi) => {
-    kanjiItems.forEach(item => {
-      if (item.collected) return;
-      const dx = player.group.position.x - item.group.position.x;
-      const dz = player.group.position.z - item.group.position.z;
-      if (Math.sqrt(dx*dx + dz*dz) < 1.15) {
-        item.collected = true; item.group.visible = false;
+// ═══════════════════════════════════════════════════════════════
+// COLLISIONS
+// ═══════════════════════════════════════════════════════════════
+function checkCollisions(){
+  players.forEach((player,pi)=>{
+    kanjiItems.forEach(item=>{
+      if(item.collected)return;
+      const dx=player.group.position.x-item.group.position.x;
+      const dz=player.group.position.z-item.group.position.z;
+      if(Math.sqrt(dx*dx+dz*dz)<1.15){
+        item.collected=true; item.group.visible=false;
         player.score++; player.collected.push(item.char);
-        spawnFloatKanji(item.char, item.group.position.clone(), pi === 0);
+        spawnFloatKanji(item.char,item.group.position.clone(),pi===0);
         updateHUD();
-        const ring = player.group.children.find(c => c.name === 'ring');
-        if (ring) ring.material.opacity = 1.3;
+        const ring=player.group.children.find(c=>c.name==='ring');
+        if(ring)ring.material.opacity=1.3;
       }
     });
   });
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  WIN CHECK
-// ═══════════════════════════════════════════════════════════════════════════
-function checkWin() {
-  if (kanjiItems.some(k => !k.collected) && timeLeft > 0) return;
-  gameActive = false;
-  const p1 = players[0].score, p2 = players[1].score;
-  const text = document.getElementById('winner-text');
-  const sub  = document.getElementById('winner-sub');
-  if      (p1 > p2) { text.textContent = '🏆 You Win!';       text.style.color = '#4fc3f7'; sub.textContent = `You: ${p1} kanji — CPU: ${p2}`; }
-  else if (p2 > p1) { text.textContent = 'CPU Wins…';         text.style.color = '#ff8a65'; sub.textContent = `CPU: ${p2} kanji — You: ${p1}`; }
-  else              { text.textContent = "🤝 It's a Tie!";    text.style.color = '#ffd54f'; sub.textContent = `Both collected ${p1} kanji`; }
+// ═══════════════════════════════════════════════════════════════
+// WIN CHECK
+// ═══════════════════════════════════════════════════════════════
+function checkWin(){
+  if(kanjiItems.some(k=>!k.collected)&&timeLeft>0)return;
+  gameActive=false;
+  const p1=players[0].score,p2=players[1].score;
+  const text=document.getElementById('winner-text');
+  const sub=document.getElementById('winner-sub');
+  if(p1>p2){text.textContent='🏆 You Win!';text.style.color='#4fc3f7';sub.textContent=`You: ${p1} kanji — CPU: ${p2}`;}
+  else if(p2>p1){text.textContent='CPU Wins…';text.style.color='#ff8a65';sub.textContent=`CPU: ${p2} kanji — You: ${p1}`;}
+  else{text.textContent="🤝 It's a Tie!";text.style.color='#ffd54f';sub.textContent=`Both collected ${p1} kanji`;}
   document.getElementById('winner-banner').classList.add('show');
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  FOLLOW CAMERA
-// ═══════════════════════════════════════════════════════════════════════════
-function updateCamera(player, delta) {
-  const camDist = 9, camH = 6.5;
-  const pos  = player.group.position;
-  const face = player.group.rotation.y;
-  const tx   = pos.x - Math.sin(face) * camDist;
-  const ty   = pos.y + camH;
-  const tz   = pos.z - Math.cos(face) * camDist;
-  const s    = Math.min(1, delta * 0.7);
-  camera.position.x += (tx - camera.position.x) * s;
-  camera.position.y += (ty - camera.position.y) * s;
-  camera.position.z += (tz - camera.position.z) * s;
-  camera.lookAt(pos.x, pos.y + 1.5, pos.z);
+// ═══════════════════════════════════════════════════════════════
+// FOLLOW CAMERA
+// ═══════════════════════════════════════════════════════════════
+function updateCamera(player,delta){
+  const camDist=9,camH=6.5;
+  const pos=player.group.position,face=player.group.rotation.y;
+  const tx=pos.x-Math.sin(face)*camDist;
+  const ty=pos.y+camH;
+  const tz=pos.z-Math.cos(face)*camDist;
+  const s=Math.min(1,delta*7);
+  camera.position.x+=(tx-camera.position.x)*s;
+  camera.position.y+=(ty-camera.position.y)*s;
+  camera.position.z+=(tz-camera.position.z)*s;
+  camera.lookAt(pos.x,pos.y+1.5,pos.z);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  GAME LOOP
-// ═══════════════════════════════════════════════════════════════════════════
-function gameLoop() {
-  animFrameId = requestAnimationFrame(gameLoop);
-  const delta   = Math.min(clock.getDelta(), 0.05);
-  const elapsed = performance.now() / 1000;
+// ═══════════════════════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════════════════════
+function gameLoop(){
+  animFrameId=requestAnimationFrame(gameLoop);
+  const delta=Math.min(clock.getDelta(),.05);
+  const elapsed=performance.now()/1000;
 
-  if (gameActive) {
-    // ── timer ──
-    timerAcc += delta;
-    if (timerAcc >= 1) { timerAcc -= 1; timeLeft = Math.max(0, timeLeft - 1); }
-    const timerEl = document.getElementById('timer-display');
-    timerEl.textContent = `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}`;
-    timerEl.classList.toggle('urgent', timeLeft <= 15);
+  if(gameActive){
+    timerAcc+=delta;
+    if(timerAcc>=1){timerAcc-=1;timeLeft=Math.max(0,timeLeft-1);}
+    const timerEl=document.getElementById('timer-display');
+    timerEl.textContent=Math.floor(timeLeft/60)+':'+(timeLeft%60).toString().padStart(2,'0');
+    timerEl.classList.toggle('urgent',timeLeft<=15);
 
-    // ── player 1 — mouse ──
-    const move1 = new THREE.Vector3();
-    if (mouseDown) {
-      const pp = players[0].group.position;
-      move1.set(mouseWorld.x - pp.x, 0, mouseWorld.z - pp.z);
-      if (move1.length() < 0.3) move1.set(0, 0, 0);
+    // ── Player 1 input: joystick OR mouse ──
+    const move1=new THREE.Vector3();
+    if(joystickActive){
+      // joystick gives world-space direction (x=right, z=down on screen)
+      // we need to transform by camera facing so it feels natural
+      const camFacing=Math.atan2(
+        camera.position.x-players[0].group.position.x,
+        camera.position.z-players[0].group.position.z
+      );
+      const jx=joystickVec.x,jz=joystickVec.z;
+      const cos=Math.cos(camFacing+Math.PI), sin=Math.sin(camFacing+Math.PI);
+      move1.set(jx*cos-jz*sin,0,jx*sin+jz*cos);
+    } else if(mouseDown){
+      const pp=players[0].group.position;
+      move1.set(mouseWorld.x-pp.x,0,mouseWorld.z-pp.z);
+      if(move1.length()<0.3)move1.set(0,0,0);
     }
-    movePlayer(players[0], move1, delta);
+    movePlayer(players[0],move1,delta);
 
-    // ── player 2 — CPU ──
-    movePlayer(players[1], getCPUMove(players[1], delta), delta);
+    // ── Player 2 CPU ──
+    movePlayer(players[1],getCPUMove(players[1],delta),delta);
 
     // ── rings ──
-    players.forEach((p, pi) => {
-      const ring = p.group.children.find(c => c.name === 'ring');
-      if (ring) {
-        ring.material.opacity = Math.max(0.32, ring.material.opacity - delta * 2.5);
-        ring.rotation.z = elapsed * 1.6 * (pi === 0 ? 1 : -1);
-      }
+    players.forEach((p,pi)=>{
+      const ring=p.group.children.find(c=>c.name==='ring');
+      if(ring){ring.material.opacity=Math.max(.32,ring.material.opacity-delta*2.5);ring.rotation.z=elapsed*1.6*(pi===0?1:-1);}
     });
 
-    // ── kanji float anim ──
-    kanjiItems.forEach(item => {
-      if (item.collected) return;
-      const t = elapsed * 1.4 + item.floatOff;
-      item.card.position.y   = 0.72 + Math.sin(t) * 0.16;
-      item.card.rotation.y   = elapsed * 0.9 + item.floatOff;
-      item.light.intensity   = 0.55 + Math.sin(t * 2) * 0.35;
+    // ── kanji anim ──
+    kanjiItems.forEach(item=>{
+      if(item.collected)return;
+      const t=elapsed*1.4+item.floatOff;
+      item.card.position.y=.72+Math.sin(t)*.16;
+      item.card.rotation.y=elapsed*.9+item.floatOff;
+      item.light.intensity=.55+Math.sin(t*2)*.35;
     });
 
     checkCollisions();
     checkWin();
-
-    // ── camera + labels ──
-    updateCamera(players[0], delta);
-    players.forEach(p => {
-      const lbl = p.group.children.find(c => c.name === 'label');
-      if (lbl) lbl.quaternion.copy(camera.quaternion);
-    });
-
+    updateCamera(players[0],delta);
+    players.forEach(p=>{const lbl=p.group.children.find(c=>c.name==='label');if(lbl)lbl.quaternion.copy(camera.quaternion);});
     drawMinimap();
   }
 
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
- 
-function startGame() {
-  document.getElementById('splash').style.display = 'none';
+// ═══════════════════════════════════════════════════════════════
+// START / RESTART
+// ═══════════════════════════════════════════════════════════════
+function startGame(){
+  document.getElementById('splash').style.display='none';
   document.getElementById('winner-banner').classList.remove('show');
-  if (!renderer) initThree();
-  players = [createPlayer(0), createPlayer(1)];
+  if(!renderer)initThree();
+  players=[createPlayer(0),createPlayer(1)];
   spawnKanjiItems();
-  timeLeft = 90; timerAcc = 0; gameActive = true;
+  timeLeft=90;timerAcc=0;gameActive=true;
   updateHUD();
-  if (animFrameId) cancelAnimationFrame(animFrameId);
+  if(animFrameId)cancelAnimationFrame(animFrameId);
   gameLoop();
 }
 
-function restartGame() {
+function restartGame(){
   cancelAnimationFrame(animFrameId);
   document.getElementById('winner-banner').classList.remove('show');
-  while (scene.children.length) scene.remove(scene.children[0]);
-  players = []; kanjiItems = [];
-  pickWord();
-  buildMap();
-  players = [createPlayer(0), createPlayer(1)];
+  while(scene.children.length)scene.remove(scene.children[0]);
+  players=[];kanjiItems=[];
+  pickWord();buildMap();
+  players=[createPlayer(0),createPlayer(1)];
   spawnKanjiItems();
-  timeLeft = 90; timerAcc = 0; gameActive = true;
-  updateHUD();
-  clock.start();
-  gameLoop();
+  timeLeft=90;timerAcc=0;gameActive=true;
+  updateHUD();clock.start();gameLoop();
 }
 
-function onResize() {
-  if (!camera || !renderer) return;
-  camera.aspect = innerWidth / innerHeight;
+function onResize(){
+  if(!camera||!renderer)return;
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 }
-</script>>
+</script>
 </body>
 </html>
