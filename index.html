@@ -724,7 +724,7 @@ function updateCamera(player,delta){
   const tx=pos.x-Math.sin(face)*camDist;
   const ty=pos.y+camH;
   const tz=pos.z-Math.cos(face)*camDist;
-  const s=Math.min(1,delta*7);
+  const s=Math.min(1,delta*0.7);
   camera.position.x+=(tx-camera.position.x)*s;
   camera.position.y+=(ty-camera.position.y)*s;
   camera.position.z+=(tz-camera.position.z)*s;
